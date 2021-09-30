@@ -11,6 +11,7 @@ const { getTotalData } = require('./function/opgg.js');
 
 client.on('ready', () => {
     console.log('higg 봇이 대기중입니다!!');
+    client.user.setActivity('higg h', { type: 'LISTENING' });
 });
 
 client.login(token);
@@ -28,7 +29,7 @@ client.on('message', async message => {
     let command = msg.substr(idx + 1, 1);
     switch (command) {
         case "h":
-            sendMsg("c : 코로나 현황을 알 수 있습니다.\no : 전적을 검색 할 수 있습니다.\ny : 노래를 재생할 수 있습니다.", message);
+            sendMsg("[higg c] : 코로나 현황을 알 수 있습니다.\n[higg o 닉네임] : 전적을 검색 할 수 있습니다.\n[higg y 노래제목] : 노래를 재생할 수 있습니다.", message);
             break;
         case "c":
             getCovidData().then((v) => {
@@ -47,24 +48,28 @@ client.on('message', async message => {
             break
         case "y":
             let musicName = msg.substr(idx + 3);
-            if(msg.substr(idx + 1).indexOf(" ") < 0){
-                sendMsg("먼저 노래 이름을 적어주새요.", message);
+            if(msg.substring(idx + 2, idx + 3) !== " " || musicName.length <= 0){
+                sendMsg("노래 제목이 안적혔거나, 명령어가 잘못 입력되었습니다.", message);
                 return;
             }
-            
 
+            if(musicName === "s"){
+                message.member.voice.channel.leave();
+                return;
+            } 
             if(message.member.voice.channel){
-                const connection = await message.member.voice.channel.join();
-
                 const r = await yts(musicName);
                 const videos = r.videos.slice(0, 1);
                 let musicInfo = videos[0];
-                let ment = musicInfo.title + "를(을) 재생합니다.\n"+musicInfo.url;
-                sendMsg(ment, message);
 
-                const music = connection.play(
-                    ytdl(musicInfo.url, { filter: "audioonly" })
-                );
+                const connection = await message.member.voice.channel.join().then(connection =>{
+                    let ment = musicInfo.title + "를(을) 재생합니다.\n"+musicInfo.url;
+                    sendMsg(ment, message);
+
+                    const musicPaly = connection.play(
+                        ytdl(musicInfo.url, { filter: "audioonly" })
+                    );
+                });
             }else{
                 sendMsg("먼저 음성채팅에 접속해주세요.", message);
             }
