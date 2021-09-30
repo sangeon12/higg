@@ -1,60 +1,81 @@
-const { Client, Intents } = require('discord.js');
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const Discord = require("discord.js");
+// const { Client, Intents } = require('discord.js');
+// const client = new Discord.Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const client = new Discord.Client();
 const { token } = require('./config.json');
-const cheerio = require('cheerio');
-const request = require('request');
+const ytdl = require("ytdl-core");
+const yts = require('yt-search');
 
-const covidUrl = "http://ncov.mohw.go.kr/bdBoardList_Real.do";
+const { getCovidData } = require('./function/covid.js');
+const { getTotalData } = require('./function/opgg.js');
 
 client.on('ready', () => {
-  console.log('higg 봇이 대기중입니다!!');
+    console.log('higg 봇이 대기중입니다!!');
 });
 
 client.login(token);
 
-client.on('message', message => {
-    if(message.content.indexOf("higg") === -1) return;
+client.on('message', async message => {
+    let msg = message.content;
+    if (msg.indexOf("higg") === -1 || message.author.bot) return;
 
-    let idx = message.content.indexOf(" ");
+    let idx = msg.indexOf(" ");
     if (idx < 0) {
-        sendMsg('higg 입니다. 명령어 목록을 보려면 "higg help"를 입력해주세요.', message);
+        sendMsg('higg 입니다. 명령어 목록을 보려면 "higg h"를 입력해주세요.', message)
         return;
     }
 
-    let command = message.content.substring(idx + 1);
-    switch(command){
-        case "help":
-            sendMsg("c : 코로나 확진자, 격리자, 격리해제, 사망자 수를 보여줍니다.", message);
+    let command = msg.substr(idx + 1, 1);
+    switch (command) {
+        case "h":
+            sendMsg("c : 코로나 현황을 알 수 있습니다.\no : 전적을 검색 할 수 있습니다.\ny : 노래를 재생할 수 있습니다.", message);
             break;
         case "c":
-            request(covidUrl, (err, res, body)=>{
-                const $ = cheerio.load(body);
-                
-                let total = $(".ca_value").eq(0).html();
-                let covid = $(".inner_value").eq(0).html();
-                let covid_d = $(".inner_value").eq(1).html();
-                let covid_o = $(".inner_value").eq(2).html();
-                
-                let inPrison = $(".ca_value").eq(4).html();
-                let inPrison_compare = $(".txt_ntc").eq(1).html();
-
-                let freeCnt = $(".ca_value").eq(2).html();
-                let freeCnt_compare = $(".txt_ntc").eq(0).html();
-
-                let death = $(".ca_value").eq(6).html();
-                let death_compare = $(".txt_ntc").eq(2).html();
-
-                let mS = $(".t_date").eq(0).html().substring(1, 6).split(".").filter(x => x != ".").join("-");
-                let year = new Date().getFullYear();
-                let date = year +"-"+mS
-
-                let result = "현재날짜 :  " + date.substr(0,9) + "\n\n누적 : " + total + "  확진자 증가 : " + covid + "  국내발생 : " + covid_d + "  해외유입 : " + covid_o + "  \n\n격리자 : " + inPrison + "  격리자 증가 : " + inPrison_compare + "  \n\n격리해제 : " + freeCnt + "  격리해제 증가 : " + freeCnt_compare + "  \n\n사망자 : " + death + "  사망자 증가 : " + death_compare;
-                sendMsg(result, message);
+            getCovidData().then((v) => {
+                sendMsg(v.result, message);
             });
             break;
+        case "o":
+            let opggValue = msg.substr(idx + 1);
+            let nickName = opggValue.substr(2);
+            getTotalData(nickName).then((v) => {
+                sendMsg(v.result, message);
+            });
+            break;
+        case "핑":
+            sendMsg("퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁웊웊웊웊웊웊웊웊웊웊웊웊웊웊", message);
+            break
+        case "y":
+            let musicName = msg.substr(idx + 3);
+            if(msg.substr(idx + 1).indexOf(" ") < 0){
+                sendMsg("먼저 노래 이름을 적어주새요.", message);
+                return;
+            }
+            
+
+            if(message.member.voice.channel){
+                const connection = await message.member.voice.channel.join();
+
+                const r = await yts(musicName);
+                const videos = r.videos.slice(0, 1);
+                let musicInfo = videos[0];
+                let ment = musicInfo.title + "를(을) 재생합니다.\n"+musicInfo.url;
+                sendMsg(ment, message);
+
+                const music = connection.play(
+                    ytdl(musicInfo.url, { filter: "audioonly" })
+                );
+            }else{
+                sendMsg("먼저 음성채팅에 접속해주세요.", message);
+            }
+            break
     }
 });
 
-function sendMsg(msg, message){
-    message.channel.send(msg);  
+function sendMsg(msg, message) {
+    message.channel.send(msg);
+}
+
+function reply(msg, message) {
+    message.reply(msg);
 }
