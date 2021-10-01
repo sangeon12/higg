@@ -102,6 +102,7 @@ client.on('message', async message => {
             break
         case "r":
             let pdb = new db.table('musicplayList');
+            let mdb = new db.table('music');
             if(pdb.all().length <= 0){
                 embed("오류", 0xfa0000, "삭제할 플레이리스트가 없습니다!", message);            
                 return;
@@ -110,11 +111,13 @@ client.on('message', async message => {
             pdb.all().forEach( (e) => {
                 pdb.delete(e.ID);
             });
+            mdb.set('musicPlay', {idx : false});
 
             embed("플레이리스트 삭제!!", 0x00faa2, "플레이리스트가 삭제되었어요!", message);
             break
         case "p":
             let pdb2 = new db.table('musicplayList');
+            let mdb2 = new db.table('music');
             let playListValue = [];
             if(pdb2.all().length <= 0){
                 embed("오류", 0xfa0000, "현재 플레이리스트에 아무것도 없습니다!", message);            
@@ -124,6 +127,7 @@ client.on('message', async message => {
             pdb2.all().forEach( (e) => {
                 playListValue.push(pdb2.get(e.ID).title);
             });
+            mdb2.set('musicPlay', {idx : false});
             
             embed("플레이리스트 입니다!!", 0x00faa2, playListValue, message);
             break
