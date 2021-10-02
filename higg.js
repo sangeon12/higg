@@ -66,9 +66,7 @@ client.on('message', async message => {
 
                 let pdb = new db.table('musicplayList');//음악 플레이 리스트
                 let mdb = new db.table('music');//음악이 재생되고 있는지 여부
-                // pdb.delete('고3들상황');
-                // pdb.delete('수능망친고3');
-                pdb.set(musicName, {title:musicName });
+                pdb.set(musicName, {title:musicName});
                 const connection = await musicChannel.join();
                 console.log(pdb.all());
                 play_music();
@@ -126,7 +124,6 @@ client.on('message', async message => {
             pdb2.all().forEach( (e) => {
                 playListValue.push(pdb2.get(e.ID).title);
             });
-            mdb2.set('musicPlay', {idx : false});
             
             embed("플레이리스트 입니다!!", 0x00faa2, playListValue, message);
             break
