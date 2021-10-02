@@ -63,18 +63,12 @@ client.on('message', async message => {
                     embed("오류", 0xfa0000, "노래 제목이 안적혔거나, 명령어가 잘못 입력되었습니다.", message);
                     return;
                 }
-                
-                const r = await yts(musicName);
-                const videos = r.videos.slice(0, 1);
-                let musicInfo = videos[0];
 
-                title = musicInfo.title;
-                url = musicInfo.url;
                 let pdb = new db.table('musicplayList');//음악 플레이 리스트
                 let mdb = new db.table('music');//음악이 재생되고 있는지 여부
                 // pdb.delete('고3들상황');
                 // pdb.delete('수능망친고3');
-                pdb.set(musicName, {title:title, url:url});
+                pdb.set(musicName, {title:musicName });
                 const connection = await musicChannel.join();
                 console.log(pdb.all());
                 play_music();
@@ -83,9 +77,13 @@ client.on('message', async message => {
                     if(pdb.all().length <= 0) return;
                     if(mdb.get('musicPlay').idx) return;
 
-                    sendMsg(pdb.get(pdb.all()[0].ID).title + "를(을) 재생합니다.\n"+pdb.get(pdb.all()[0].ID).url, message);
+                    const r = await yts(pdb.get(pdb.all()[0].ID).title);
+                    const videos = r.videos.slice(0, 1);
+                    let musicInfo = videos[0];
+
+                    sendMsg(musicInfo.title + "를(을) 재생합니다.\n"+musicInfo.url, message);
                         const musicPaly = connection.play(
-                            ytdl(pdb.get(pdb.all()[0].ID).url, { filter: "audioonly" })
+                            ytdl(musicInfo.url, { filter: "audioonly" })
                         );
                         mdb.set('musicPlay', {idx : true});
 
@@ -112,6 +110,7 @@ client.on('message', async message => {
                 pdb.delete(e.ID);
             });
             mdb.set('musicPlay', {idx : false});
+            message.member.voice.channel.leave();
 
             embed("플레이리스트 삭제!!", 0x00faa2, "플레이리스트가 삭제되었어요!", message);
             break
