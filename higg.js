@@ -13,15 +13,14 @@ const { getTotalData } = require('./function/opgg.js');
 
 client.on('ready', () => {
     console.log('higg 봇이 대기중입니다!!');
-    status("개발 테스트용 봇입니다.");
-    let mdb = new db.table('music');//음악이 재생되고 있는지 여부
-    mdb.set('musicPlay', {idx : false});
+    status("higg h");
 }); 
 
 client.login(token);
 
 client.on('message', async message => {
     let msg = message.content;
+    let pdb = new db.table('musicplayList');//음악 플레이 리스트
     if (msg.indexOf("higg") === -1 || message.author.bot) return;
 
     let idx = msg.indexOf(" ");
@@ -33,7 +32,7 @@ client.on('message', async message => {
     let command = msg.substr(idx + 1, 1);
     switch (command) {
         case "h":
-            embed('명령어 목록입니다!!', 0x00faa2, "[higg c] : 코로나 현황을 알 수 있습니다!\n[higg o 닉네임] : 전적을 검색 할 수 있습니다!\n[higg y 노래제목] : 노래를 재생할 수 있습니다!\n[higg y l] : higg 봇을 음성채널에서 내보낼 수 있습니다.ㅠㅠ\n[higg p] : 현재 재생되고 있는 플레이리스트를 볼 수 있습니다.\n[higg r] : 현재 재생되고 있는 플레이 리스트를 제거할 수 있습니다!", message);
+            embed('명령어 목록입니다!!', 0x00faa2, "[higg c] : 코로나 현황을 알 수 있습니다!\n[higg o 닉네임] : 전적을 검색 할 수 있습니다!\n[higg y 노래제목] : 플레이리스트에 노래를 저장합니다!\n[higg p] : 플레이리스트에 있는 노래를 재생할 수 있습니다!\n[higg p l] : higg 봇을 음성채널에서 내보낼 수 있습니다.ㅠㅠ\n[higg l] : 현재 재생되고 있는 플레이리스트를 볼 수 있습니다.\n[higg r] : 현재 재생되고 있는 플레이 리스트를 제거할 수 있습니다!", message);
             break;
         case "c":
             getCovidData().then((v) => {
@@ -52,30 +51,31 @@ client.on('message', async message => {
             break
         case "y":
             let musicName = msg.substr(idx + 3);
-            let musicChannel = message.member.voice.channel;
 
-            if(musicName === "l"){
+            if(msg.substring(idx + 2, idx + 3) !== " " || musicName.length <= 0){
+                embed("오류", 0xfa0000, "노래 제목이 안적혔거나, 명령어가 잘못 입력되었습니다.", message);
+                return;
+            }
+
+            pdb.set(musicName, {title:musicName});
+            console.log(pdb.all());
+            break
+        case "p":
+            let content = msg.substr(idx + 3);
+            let musicChannel = message.member.voice.channel;
+            if(content === "l"){
                 musicChannel.leave();
                 return;
             } 
             if(musicChannel){
-                if(msg.substring(idx + 2, idx + 3) !== " " || musicName.length <= 0){
-                    embed("오류", 0xfa0000, "노래 제목이 안적혔거나, 명령어가 잘못 입력되었습니다.", message);
-                    return;
-                }
-
-                let pdb = new db.table('musicplayList');//음악 플레이 리스트
-                let mdb = new db.table('music');//음악이 재생되고 있는지 여부
-                pdb.set(musicName, {title:musicName});
                 const connection = await musicChannel.join();
-                console.log(pdb.all());
                 play_music();
 
                 async function play_music(){
-                    if(pdb.all().length <= 0) return;
-                    if(mdb.get('musicPlay').idx) return;
+                    let playList = pdb.all();
+                    if(playList.length <= 0) return;
 
-                    const r = await yts(pdb.get(pdb.all()[0].ID).title);
+                    const r = await yts(pdb.get(playList[0].ID).title);
                     const videos = r.videos.slice(0, 1);
                     let musicInfo = videos[0];
 
@@ -83,11 +83,9 @@ client.on('message', async message => {
                         const musicPaly = connection.play(
                             ytdl(musicInfo.url, { filter: "audioonly" })
                         );
-                        mdb.set('musicPlay', {idx : true});
 
                         musicPaly.on("finish", () => {
-                            if(pdb.all().length > 0) pdb.delete(pdb.all()[0].ID);
-                            mdb.set('musicPlay', {idx : false});
+                            if(playList.length > 0) pdb.delete(playList[0].ID);
                             play_music();
                         });
                 }
@@ -97,8 +95,6 @@ client.on('message', async message => {
             }
             break
         case "r":
-            let pdb = new db.table('musicplayList');
-            let mdb = new db.table('music');
             if(pdb.all().length <= 0){
                 embed("오류", 0xfa0000, "삭제할 플레이리스트가 없습니다!", message);            
                 return;
@@ -107,22 +103,18 @@ client.on('message', async message => {
             pdb.all().forEach( (e) => {
                 pdb.delete(e.ID);
             });
-            mdb.set('musicPlay', {idx : false});
-            message.member.voice.channel.leave();
 
             embed("플레이리스트 삭제!!", 0x00faa2, "플레이리스트가 삭제되었어요!", message);
             break
-        case "p":
-            let pdb2 = new db.table('musicplayList');
-            let mdb2 = new db.table('music');
+        case "l":
             let playListValue = [];
-            if(pdb2.all().length <= 0){
+            if(pdb.all().length <= 0){
                 embed("오류", 0xfa0000, "현재 플레이리스트에 아무것도 없습니다!", message);            
                 return;
             }
 
-            pdb2.all().forEach( (e) => {
-                playListValue.push(pdb2.get(e.ID).title);
+            pdb.all().forEach( (e) => {
+                playListValue.push(pdb.get(e.ID).title);
             });
             
             embed("플레이리스트 입니다!!", 0x00faa2, playListValue, message);
@@ -147,6 +139,5 @@ function embed(title, color, content, message){
 }
 
 function status(musicName){
-    //client.user.setActivity(musicName, { type: 'LISTENING' });
-    client.user.setActivity(musicName);
+    client.user.setActivity(musicName, { type: 'LISTENING' });
 }
