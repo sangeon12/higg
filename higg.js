@@ -72,10 +72,10 @@ client.on('message', async message => {
                 play_music();
 
                 async function play_music(){
-                    let playList = pdb.all();
+                    let playList = pdb.all()[0];
                     if(playList.length <= 0) return;
 
-                    const r = await yts(pdb.get(playList[0].ID).title);
+                    const r = await yts(pdb.get(playList.ID).title);
                     const videos = r.videos.slice(0, 1);
                     let musicInfo = videos[0];
 
@@ -85,7 +85,7 @@ client.on('message', async message => {
                         );
 
                         musicPaly.on("finish", () => {
-                            if(playList.length > 0) pdb.delete(playList[0].ID);
+                            if(playList.length > 0) pdb.delete(playList.ID);
                             play_music();
                         });
                 }
@@ -95,25 +95,27 @@ client.on('message', async message => {
             }
             break
         case "r":
-            if(pdb.all().length <= 0){
+            let playListRemove = pdb.all();
+            if(playListRemove.length <= 0){
                 embed("오류", 0xfa0000, "삭제할 플레이리스트가 없습니다!", message);            
                 return;
             }
             
-            pdb.all().forEach( (e) => {
+            playListRemove.forEach( (e) => {
                 pdb.delete(e.ID);
             });
 
             embed("플레이리스트 삭제!!", 0x00faa2, "플레이리스트가 삭제되었어요!", message);
             break
         case "l":
+            let getPlayList = pdb.all();
             let playListValue = [];
-            if(pdb.all().length <= 0){
+            if(getPlayList.length <= 0){
                 embed("오류", 0xfa0000, "현재 플레이리스트에 아무것도 없습니다!", message);            
                 return;
             }
 
-            pdb.all().forEach( (e) => {
+            getPlayList.forEach( (e) => {
                 playListValue.push(pdb.get(e.ID).title);
             });
             
