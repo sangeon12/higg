@@ -72,10 +72,10 @@ client.on('message', async message => {
                 play_music();
 
                 async function play_music(){
-                    let playList = pdb.all()[0];
+                    let playList = pdb.all();
                     if(playList.length <= 0) return;
 
-                    const r = await yts(pdb.get(playList.ID).title);
+                    const r = await yts(pdb.get(playList[0].ID).title);
                     const videos = r.videos.slice(0, 1);
                     let musicInfo = videos[0];
 
@@ -85,7 +85,7 @@ client.on('message', async message => {
                         );
 
                         musicPaly.on("finish", () => {
-                            if(playList.length > 0) pdb.delete(playList.ID);
+                            if(playList.length > 0) pdb.delete(playList[0].ID);
                             play_music();
                         });
                 }
