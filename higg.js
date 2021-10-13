@@ -20,9 +20,9 @@ client.login(token);
 
 client.on('message', async message => {
     let msg = message.content;
-    let pdb = new db.table('musicplayList');//음악 플레이 리스트
-    if (msg.indexOf("higg") === -1 || message.author.bot) return;
+    if (msg.indexOf("higg") === -1 || message.author.bot || message.channel.name !== 'higg') return;
 
+    let pdb = new db.table('guild'+message.guild.id);//음악 플레이 리스트
     let idx = msg.indexOf(" ");
     if (idx < 0) {
         embed('환영합니다!!', 0x00faa2, '안녕하세요! higg 입니다! 사용법을 모르시면 [higg h] 를 입력해주세요!', message);
@@ -58,7 +58,8 @@ client.on('message', async message => {
             }
 
             pdb.set(musicName, {title:musicName});
-            console.log(pdb.all());
+            console.log(message.guild.name,',',message.guild.id);//노래가 추가된 길드의 이름과 id
+            console.log(pdb.all());//플레이리스트 전체 출력
             break
         case "p":
             let content = msg.substr(idx + 3);
