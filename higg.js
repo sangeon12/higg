@@ -32,19 +32,7 @@ client.on('message', async message => {
     let command = msg.substr(idx + 1, 1);
     switch (command) {
         case "h":
-            embed('명령어 목록입니다!!', 0x00faa2, "[higg c] : 코로나 현황을 알 수 있습니다!\n[higg o 닉네임] : 전적을 검색 할 수 있습니다!\n[higg y 노래제목] : 플레이리스트에 노래를 저장합니다!\n[higg p] : 플레이리스트에 있는 노래를 재생할 수 있습니다!\n[higg p l] : higg 봇을 음성채널에서 내보낼 수 있습니다.ㅠㅠ\n[higg l] : 현재 재생되고 있는 플레이리스트를 볼 수 있습니다.\n[higg r] : 현재 재생되고 있는 플레이 리스트를 제거할 수 있습니다!", message);
-            break;
-        case "c":
-            getCovidData().then((v) => {
-                embed("코로나 현황 입니다!!", 0xfa0000, v.result, message);
-            });
-            break;
-        case "o":
-            let opggValue = msg.substr(idx + 1);
-            let nickName = opggValue.substr(2);
-            getTotalData(nickName).then((v) => {
-                embed("검색된 전적입니다!!",0x00faa2,v.result, message);
-            });
+            embed('명령어 목록입니다!!', 0x00faa2, "[higg y 노래제목] : 플레이리스트에 노래를 저장합니다!\n[higg p] : 플레이리스트에 있는 노래를 재생할 수 있습니다!\n[higg p l] : higg 봇을 음성채널에서 내보낼 수 있습니다.ㅠㅠ\n[higg l] : 현재 재생되고 있는 플레이리스트를 볼 수 있습니다.\n[higg r] : 현재 재생되고 있는 플레이 리스트를 제거할 수 있습니다!", message);
             break;
         case "핑":
             embed("퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁웊웊웊웊웊웊웊웊웊웊웊웊웊웊",0xf6fa00,"퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁퐁웊웊웊웊웊웊웊웊웊웊웊웊웊웊", message);
